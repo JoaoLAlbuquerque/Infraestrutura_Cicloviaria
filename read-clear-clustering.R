@@ -56,5 +56,66 @@ var <- data.cluster[, by = group,
 
 # join entre todas as tabelas (media, sd e var)
 
+join <- res.media[sd, on = "group"]
+
+join2 <- join[var, on =  "group"]
+
+# normaliza as variaveis 
+
+normaliza <- function(x){
+  
+  z <- (x - mean(x,na.rm = T))/sd(x,na.rm = T)
+  
+  return(z)
+  
+}
+
+dado.pronto <- join2[, 2:24 := lapply(.SD, normaliza),
+   .SDcols = 2:24]
+
+
+# 3. Clusterização --------------------------------------------------------
+
+library(factoextra)
+
+tictoc::tic()
+
+fviz_nbclust(dado.pronto[,!c('group')], kmeans,iter.max = 50,method = "gap_stat",k.max = 20,nboot = 50)+
+  labs(subtitle = "Gap statistic method")
+
+fviz_nbclust(dado.pronto[,!c('group')], kmeans,iter.max = 50, method = "silhouette")+
+  labs(subtitle = "Silhouette method")
+
+fviz_nbclust(dado.pronto[,!c('group')], kmeans,iter.max = 50, method = "wss")+
+  labs(subtitle = "")
+
+x <- kmeans(x = dado.pronto[,!c('group')],centers = 7,iter.max = 25)
+
+dado.pronto[,cluster:= x$cluster]
+
+
+# 4. Colocar cluster na localização ---------------------------------------
+
+data.loc <- data[,1:4]
+data.loc <- na.omit(data.loc, cols = 1:4)
+data.loc$id <- 1:length(data.loc$geolocationLongitude)
+data.loc[, group := cut(id, breaks= seq(0, nrow(data.loc), 20))] 
+
+res.loc <- data.loc[, by = group,
+                              lapply(.SD, mean),
+                              .SDcols = 1:4]
+
+# agrupar tudo 
+
+compil <- data.loc[dado.pronto, on = "group"]
+
+require(sf)
+
+sf.arq <-  st_as_sf(compil, coords = c('geolocationLongitude', 'geolocationLatitude'), crs = 4326)
+
+mapview::mapview(sf.arq,zcol = "cluster", at = seq(1,7,1), legend = TRUE)
+
+
+
 
 
