@@ -15,6 +15,11 @@ data <- fread(input = 'data-raw/Levantamento_Pici_Rota1_15102019_Sobrecarga_D2S1
 data <- as.data.table(data)
 
 
+# require(anytime); require(lubridate)
+# 
+# teste.time.stamp <- data[,data:= as_datetime(as.numeric(deviceMotionTimestamp))]
+# teste.time.stamp <- data[,data:= as.POSIXct(as.numeric(deviceMotionTimestamp), origin="1970-01-01")]
+
 data.cluster <- data[,!c(1:6)]
 data.cluster <- data.cluster[,!c('geolocationTimestamp','deviceMotionTimestamp','deviceOrientationTrueHeading',
                                  'deviceOrientationMagneticHeading','deviceOrientationHeadingAccuracy',
